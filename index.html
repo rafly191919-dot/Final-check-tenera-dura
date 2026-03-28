@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dura Tenera Admin</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="loadingOverlay" class="loading-overlay hidden">
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <div id="loadingText">Memuat...</div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <section id="loginPage" class="login-page">
+    <div class="login-card">
+      <div class="brand-mark">DT</div>
+      <h1>Dura Tenera Admin</h1>
+      <p class="muted">Frontend realtime terhubung ke Firebase lama.</p>
+
+      <div class="form-stack">
+        <div class="field">
+          <label for="username">Username</label>
+          <input id="username" type="text" placeholder="Masukkan username" autocomplete="username" />
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" type="password" placeholder="Masukkan password" autocomplete="current-password" />
+        </div>
+
+        <button id="loginBtn" class="btn btn-primary btn-block" onclick="handleLogin()">Login</button>
+        <div id="loginMessage" class="inline-message"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="appShell" class="app-shell hidden">
+    <div id="mobileBackdrop" class="mobile-backdrop" onclick="toggleSidebar(false)"></div>
+
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <div>
+          <div class="sidebar-badge">DT</div>
+          <div class="sidebar-title">Dura Tenera</div>
+          <div class="sidebar-subtitle">Internal Admin</div>
+        </div>
+        <button class="icon-btn mobile-only" onclick="toggleSidebar(false)">×</button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-link active" data-page="dashboardPage">Dashboard</button>
+        <button class="nav-link" data-page="inputPage">Input Transaksi</button>
+        <button class="nav-link" data-page="transactionsPage">Data Transaksi</button>
+        <button class="nav-link" data-page="dailyPage">Rekap Harian</button>
+        <button class="nav-link" data-page="weeklyPage">Rekap Mingguan</button>
+        <button class="nav-link" data-page="monthlyPage">Rekap Bulanan</button>
+        <button class="nav-link" data-page="spreadsheetPage">Spreadsheet</button>
+        <button class="nav-link" data-page="waPage">Laporan WA</button>
+        <button class="nav-link" data-page="suppliersPage">Supplier</button>
+      </nav>
+    </aside>
+
+    <div class="app-main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="icon-btn mobile-only" onclick="toggleSidebar(true)">☰</button>
+          <div>
+            <h2 id="topbarTitle">Dashboard</h2>
+            <div class="topbar-subtitle">
+              <span id="userRoleBadge" class="role-badge">-</span>
+              <span id="userEmail" class="muted-light">-</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <span id="syncStatus" class="sync-status">Realtime aktif</span>
+          <button class="btn btn-secondary" onclick="refreshCurrentPage()">Refresh</button>
+          <button class="btn btn-danger-outline" onclick="handleLogout()">Logout</button>
+        </div>
+      </header>
+
+      <main class="content">
+        <section id="dashboardPage" class="page">
+          <div class="section-head">
+            <div>
+              <h3>Dashboard</h3>
+              <p class="muted">Urutan tetap: Total → Persentase → Kesimpulan.</p>
+            </div>
+          </div>
+
+          <div id="dashboardSummary"></div>
+
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-head">
+                <h4>Ringkas Per Supplier</h4>
+              </div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Nama</th>
+                      <th>Jml</th>
+                      <th>Sampel</th>
+                      <th>Tenera</th>
+                      <th>Dura</th>
+                      <th>% T</th>
+                      <th>% D</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashboardSupplierBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <h4>Ringkas Per Sopir</h4>
+              </div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Nama</th>
+                      <th>Jml</th>
+                      <th>Sampel</th>
+                      <th>Tenera</th>
+                      <th>Dura</th>
+                      <th>% T</th>
+                      <th>% D</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashboardDriverBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="inputPage" class="page hidden">
+          <div class="section-head">
+            <div>
+              <h3>Input Transaksi</h3>
+              <p class="muted">Tetap memakai field Firebase yang sudah ada.</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="form-grid">
+              <div class="field">
+                <label for="tanggal">Tanggal</label>
+                <input id="tanggal" type="date" />
+              </div>
+
+              <div class="field">
+                <label for="supplier">Supplier</label>
+                <input id="supplier" type="text" placeholder="Pilih atau ketik supplier" list="supplierQuickList" />
+                <datalist id="supplierQuickList"></datalist>
+              </div>
+
+              <div class="field">
+                <label for="sopir">Nama Sopir</label>
+                <input id="sopir" type="text" placeholder="Pilih atau ketik nama sopir" list="driverQuickList" />
+                <datalist id="driverQuickList"></datalist>
+              </div>
+
+              <div class="field">
+                <label for="plat">Plat Nomor</label>
+                <input id="plat" type="text" placeholder="Pilih atau ketik plat" list="plateQuickList" />
+                <datalist id="plateQuickList"></datalist>
+              </div>
+
+              <div class="field">
+                <label for="tenera">Tenera</label>
+                <input id="tenera" type="number" placeholder="0" />
+              </div>
+
+              <div class="field">
+                <label for="dura">Dura</label>
+                <input id="dura" type="number" placeholder="0" />
+              </div>
+            </div>
+
+            <div class="quick-group">
+              <div>
+                <div class="quick-title">Quick Supplier</div>
+                <div id="quickSuppliers" class="chip-wrap"></div>
+              </div>
+              <div>
+                <div class="quick-title">Quick Sopir</div>
+                <div id="quickDrivers" class="chip-wrap"></div>
+              </div>
+              <div>
+                <div class="quick-title">Quick Plat</div>
+                <div id="quickPlates" class="chip-wrap"></div>
+              </div>
+            </div>
+
+            <div class="preview-card">
+              <div class="preview-grid">
+                <div><span class="muted">Total</span><strong id="previewTotal">0</strong></div>
+                <div><span class="muted">% Tenera</span><strong id="previewTenera">0%</strong></div>
+                <div><span class="muted">% Dura</span><strong id="previewDura">0%</strong></div>
+              </div>
+              <div id="validationIndicator" class="validation invalid">Belum valid</div>
+              <div id="saveMessage" class="inline-message"></div>
+            </div>
+
+            <div class="button-row">
+              <button id="saveBtn" class="btn btn-primary" onclick="saveTransaction(false)" disabled>Simpan</button>
+              <button id="saveNewBtn" class="btn btn-primary-light" onclick="saveTransaction(true)" disabled>Simpan &amp; Input Baru</button>
+              <button class="btn btn-secondary" onclick="resetForm()">Reset Form</button>
+              <button class="btn btn-secondary" onclick="showPage('dashboardPage')">Batal / Kembali</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="transactionsPage" class="page hidden">
+          <div class="section-head">
+            <div>
+              <h3>Data Transaksi</h3>
+              <p class="muted">Search, filter, sort, pagination, dan aksi berdasarkan role.</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="filter-grid">
+              <input id="txSearch" type="text" placeholder="Search global..." />
+              <input id="txDate" type="date" />
+              <input id="txStart" type="date" />
+              <input id="txEnd" type="date" />
+              <select id="txSupplierFilter"></select>
+              <select id="txDriverFilter"></select>
+              <select id="txSort">
+                <option value="newest">Terbaru</option>
+                <option value="oldest">Terlama</option>
+              </select>
+              <button class="btn btn-secondary" onclick="resetTransactionFilters()">Reset Filter</button>
+            </div>
+
+            <div class="table-meta">
+              <span id="txCountInfo">0 data</span>
+            </div>
+
+            <div class="table-wrap sticky-wrap">
+              <table class="data-table sticky-header">
+                <thead>
+                  <tr>
+                    <th>No</th>
+                    <th>ID transaksi</th>
+                    <th>Tanggal</th>
+                    <th>Jam</th>
+                    <th>Supplier</th>
+                    <th>Sopir</th>
+                    <th>Plat</th>
+                    <th>Tenera</th>
+                    <th>Dura</th>
+                    <th>Total</th>
+                    <th>% Tenera</th>
+                    <th>% Dura</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="transactionsBody"></tbody>
+              </table>
+            </div>
+
+            <div class="pagination-row">
+              <button class="btn btn-secondary" onclick="changeTransactionPage(-1)">Prev</button>
+              <span id="txPageInfo">Hal. 1</span>
+              <button class="btn btn-secondary" onclick="changeTransactionPage(1)">Next</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="dailyPage" class="page hidden"><div id="dailyReport"></div></section>
+        <section id="weeklyPage" class="page hidden"><div id="weeklyReport"></div></section>
+        <section id="monthlyPage" class="page hidden"><div id="monthlyReport"></div></section>
+
+        <section id="spreadsheetPage" class="page hidden">
+          <div class="section-head">
+            <div>
+              <h3>Spreadsheet View</h3>
+              <p class="muted">Tabel panjang dari transaksi Firebase.</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="filter-grid">
+              <input id="sheetSearch" type="text" placeholder="Search..." />
+              <select id="sheetSupplierFilter"></select>
+              <select id="sheetDriverFilter"></select>
+              <button class="btn btn-secondary" onclick="resetSpreadsheetFilters()">Reset Filter</button>
+            </div>
+            <div class="table-meta">
+              <span id="sheetCountInfo">0 data tampil</span>
+            </div>
+            <div class="table-wrap sticky-wrap">
+              <table class="data-table sticky-header">
+                <thead>
+                  <tr>
+                    <th>No</th>
+                    <th>ID</th>
+                    <th>Tanggal</th>
+                    <th>Jam</th>
+                    <th>Supplier</th>
+                    <th>Sopir</th>
+                    <th>Plat</th>
+                    <th>Tenera</th>
+                    <th>Dura</th>
+                    <th>Total</th>
+                    <th>% T</th>
+                    <th>% D</th>
+                  </tr>
+                </thead>
+                <tbody id="spreadsheetBody"></tbody>
+              </table>
+            </div>
+            <div class="pagination-row">
+              <button class="btn btn-secondary" onclick="changeSpreadsheetPage(-1)">Prev</button>
+              <span id="sheetPageInfo">Hal. 1</span>
+              <button class="btn btn-secondary" onclick="changeSpreadsheetPage(1)">Next</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="waPage" class="page hidden">
+          <div class="section-head">
+            <div>
+              <h3>Laporan WA</h3>
+              <p class="muted">Generate, preview, copy, dan buka WhatsApp.</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="filter-grid">
+              <select id="waTemplate">
+                <option value="ringkas">Ringkas</option>
+                <option value="lengkap">Lengkap</option>
+                <option value="supplier">Per Supplier</option>
+                <option value="sopir">Per Sopir</option>
+              </select>
+              <input id="waDate" type="date" />
+              <input id="waStart" type="date" />
+              <input id="waEnd" type="date" />
+              <select id="waSupplierFilter"></select>
+              <select id="waDriverFilter"></select>
+              <button class="btn btn-secondary" onclick="generateWA()">Generate Narasi</button>
+              <button class="btn btn-secondary" onclick="copyWA()">Copy Narasi</button>
+              <button class="btn btn-primary" onclick="sendWA()">Buka WhatsApp</button>
+            </div>
+            <textarea id="waText" rows="20" placeholder="Preview narasi laporan WA..."></textarea>
+          </div>
+        </section>
+
+        <section id="suppliersPage" class="page hidden">
+          <div class="section-head">
+            <div>
+              <h3>Supplier</h3>
+              <p class="muted">Memakai data existing bila tersedia, tanpa mengubah struktur backend.</p>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card">
+              <h4>Daftar Supplier</h4>
+              <div class="filter-grid single">
+                <input id="supplierSearch" type="text" placeholder="Cari supplier..." />
+              </div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Nama Supplier</th>
+                      <th>Status</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="supplierBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="card">
+              <h4>Kelola Supplier</h4>
+              <div class="field">
+                <label for="supplierNameInput">Nama Supplier</label>
+                <input id="supplierNameInput" type="text" placeholder="Masukkan nama supplier" />
+              </div>
+              <div class="field">
+                <label for="supplierStatusInput">Status</label>
+                <select id="supplierStatusInput">
+                  <option value="aktif">Aktif</option>
+                  <option value="nonaktif">Nonaktif</option>
+                </select>
+              </div>
+              <div class="button-row">
+                <button class="btn btn-primary" onclick="saveSupplier()">Simpan Supplier</button>
+                <button class="btn btn-secondary" onclick="resetSupplierForm()">Reset</button>
+              </div>
+              <div class="reference-box">
+                <strong>Prioritas Supplier</strong>
+                <ul>
+                  <li>CV Lembah Hijau Perkasa</li>
+                  <li>Koperasi Karya Mandiri</li>
+                  <li>Tani Rampah Jaya</li>
+                  <li>PT Putra Utama Lestari</li>
+                  <li>PT Manunggal Adi Jaya</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </section>
+
+  <div id="confirmModal" class="modal hidden">
+    <div class="modal-card">
+      <h4>Konfirmasi Hapus</h4>
+      <div id="confirmModalContent" class="muted"></div>
+      <div class="button-row">
+        <button class="btn btn-danger" id="confirmDeleteBtn">Ya, Hapus</button>
+        <button class="btn btn-secondary" onclick="closeConfirmModal()">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
